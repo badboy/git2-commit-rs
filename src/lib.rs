@@ -32,10 +32,3 @@ pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<(), 
         .commit(update_ref, &signature, &signature, message, &tree, &parents)
         .map(|_| ())
 }
-
-#[cfg(test)]
-mod test {
-    #[test]
-    fn it_works() {
-    }
-}
