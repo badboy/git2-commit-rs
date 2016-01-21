@@ -1,7 +1,23 @@
 extern crate git2;
 
 use std::path::Path;
-use git2::{Repository, Signature, Error};
+use git2::{Config, Repository, Signature, Error};
+
+pub struct Author {
+    pub name: String,
+    pub email: String
+}
+
+pub fn get_signature() -> Result<Author, Error> {
+    let config = try!(Config::open_default());
+    let author = try!(config.get_string("user.name"));
+    let email = try!(config.get_string("user.email"));
+    Ok(Author {
+        name: author.to_string(),
+        email: email.to_string()
+    })
+}
+
 
 pub fn add<P: AsRef<Path>>(repo: &str, files: &[P]) -> Result<(), Error> {
     let repo = try!(Repository::open(repo));
