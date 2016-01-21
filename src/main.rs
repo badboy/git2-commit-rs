@@ -11,7 +11,7 @@ git2-commit
 
 Usage:
   git2-commit add [--repository=<path>] <file>...
-  git2-commit commit [--repository=<path>] <name> <email> <message>
+  git2-commit commit [--repository=<path>] <message>
 
 Options:
   -r <path>, --repository=<path>  Path to the repository's working directory [default: .]
@@ -23,8 +23,6 @@ Options:
 struct Args {
     arg_file: Vec<String>,
 
-    arg_name: String,
-    arg_email: String,
     arg_message: String,
 
     flag_repository: String,
@@ -42,11 +40,10 @@ fn git_add(args: &Args) -> Result<(), Error> {
 fn git_commit(args: &Args) -> Result<(), Error> {
     let repo = &args.flag_repository;
 
-    let name = &args.arg_name;
-    let email = &args.arg_email;
+    let signature = try!(git2_commit::get_signature());
     let message = &args.arg_message;
 
-    git2_commit::commit(repo, name, email, message)
+    git2_commit::commit(repo, &signature.name, &signature.email, message)
 }
 
 fn run(args: &Args) -> Result<(), Error> {
