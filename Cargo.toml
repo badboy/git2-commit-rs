@@ -4,4 +4,6 @@ name = "git2-commit"
 version = "0.1.0"
 
 [dependencies]
+docopt = "0.6.78"
 git2 = "0.3.4"
+rustc-serialize = "0.3.16"
