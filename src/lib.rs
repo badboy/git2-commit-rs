@@ -30,7 +30,7 @@ pub fn add<P: AsRef<Path>>(repo: &str, files: &[P]) -> Result<(), Error> {
     index.write()
 }
 
-pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<(), Error> {
+pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<String, Error> {
     let signature = try!(Signature::now(name, email));
     let update_ref = Some("HEAD");
 
@@ -44,7 +44,8 @@ pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<(), 
     let tree_oid = try!(index.write_tree());
     let tree = try!(repo.find_tree(tree_oid));
 
-    repo
-        .commit(update_ref, &signature, &signature, message, &tree, &parents)
-        .map(|_| ())
+    match repo.commit(update_ref, &signature, &signature, message, &tree, &parents) {
+        Ok(oid) => Ok(oid.to_string()),
+        Err(err) => Err(err)
+    }
 }
