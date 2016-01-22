@@ -38,7 +38,7 @@ fn git_add(args: &Args) -> Result<(), Error> {
     git2_commit::add(repo, files)
 }
 
-fn git_commit(args: &Args) -> Result<(), Error> {
+fn git_commit(args: &Args) -> Result<String, Error> {
     let repo = &args.flag_repository;
 
     let signature = try!(git2_commit::get_signature());
@@ -47,10 +47,13 @@ fn git_commit(args: &Args) -> Result<(), Error> {
     git2_commit::commit(repo, &signature.name, &signature.email, message)
 }
 
-fn run(args: &Args) -> Result<(), Error> {
+fn run(args: &Args) -> Result<String, Error> {
 
     if args.cmd_add {
-        return git_add(args);
+        return match git_add(args) {
+            Ok(_) => Ok(String::new()),
+            Err(err) => Err(err)
+        }
     }
 
     if args.cmd_commit {
@@ -66,7 +69,7 @@ fn main() {
         .unwrap_or_else(|e| e.exit());
 
     match run(&args) {
-        Ok(()) => {}
+        Ok(commit_id) => println!("Commit ID: {}", commit_id),
         Err(e) => println!("error: {}", e.message()),
 
     }
