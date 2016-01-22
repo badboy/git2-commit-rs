@@ -10,8 +10,9 @@ const USAGE: &'static str = "
 git2-commit
 
 Usage:
-  git2-commit add [--repository=<path>] <file>...
-  git2-commit commit [--repository=<path>] <message>
+  git2-commit [options]
+  git2-commit [options] add <file>...
+  git2-commit [options] commit <message>
 
 Options:
   -r <path>, --repository=<path>  Path to the repository's working directory [default: .]
@@ -60,16 +61,13 @@ fn run(args: &Args) -> Result<(), Error> {
 }
 
 fn main() {
-    //add(".", &["foo.txt"]).unwrap();
-    //commit(".", "jer", "foobar", "next commit").unwrap();
-
     let args : Args = Docopt::new(USAGE)
         .and_then(|d| d.decode())
         .unwrap_or_else(|e| e.exit());
 
     match run(&args) {
         Ok(()) => {}
-        Err(e) => println!("error: {}", e),
+        Err(e) => println!("error: {}", e.message()),
 
     }
 }
