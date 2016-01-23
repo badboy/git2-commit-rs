@@ -48,3 +48,12 @@ pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<(), 
         .commit(update_ref, &signature, &signature, message, &tree, &parents)
         .map(|_| ())
 }
+
+pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -> Result<(), Error> {
+    let repo = try!(Repository::open(repo));
+    let obj = try!(repo.revparse_single("HEAD"));
+    let signature = try!(Signature::now(name, email));
+
+    repo.tag(tag_name, &obj, &signature, message, false)
+        .map(|_| ())
+}
