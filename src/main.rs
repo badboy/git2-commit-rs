@@ -11,11 +11,12 @@ git2-commit
 
 Usage:
   git2-commit [options]
-  git2-commit [options] add <file>...
+  git2-commit [options] add [--force] <file>...
   git2-commit [options] commit <message>
   git2-commit [options] tag <tag-name> <tag-message>
 
 Options:
+  -f, --force                     Allow adding otherwise ignored files.
   -r <path>, --repository=<path>  Path to the repository's working directory [default: .]
   -h, --help                      Show this screen.
 ";
@@ -30,6 +31,7 @@ struct Args {
     arg_tag_name: String,
     arg_tag_message: String,
 
+    flag_force: bool,
     flag_repository: String,
     cmd_add: bool,
     cmd_commit: bool,
@@ -40,7 +42,7 @@ fn git_add(args: &Args) -> Result<(), Error> {
     let repo = &args.flag_repository;
     let files = &args.arg_file;
 
-    git2_commit::add(repo, files)
+    git2_commit::add(repo, files, args.flag_force)
 }
 
 fn git_commit(args: &Args) -> Result<(), Error> {
