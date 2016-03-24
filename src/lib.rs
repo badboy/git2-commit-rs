@@ -75,20 +75,22 @@ pub fn push(repo: &str, url: &str, refs: &[&str]) -> Result<(), Error> {
     remote.push(refs, Some(&mut opts))
 }
 
-pub fn branch(repo: &str) -> Result<(), Error> {
+pub fn branch(repo: &str, branch_type: BranchType) -> Result<(), Error> {
     let repo = try!(Repository::open(repo));
 
     let head = try!(repo.head());
-
     let short = head.shorthand().unwrap_or("empty");
-    if head.is_branch() {
-        println!("* {}", short);
-    } else {
-        let oid = head.target().expect("Invalid OID");
-        println!("* ({} detached at {})", short, oid);
+
+    if branch_type == BranchType::Local {
+        if head.is_branch() {
+            println!("* {}", short);
+        } else {
+            let oid = head.target().expect("Invalid OID");
+            println!("* ({} detached at {})", short, oid);
+        }
     }
 
-    let branches = repo.branches(Some(BranchType::Local)).expect("No branches found");
+    let branches = repo.branches(Some(branch_type)).expect("No branches found");
 
     for (branch, _) in branches {
         let name = branch.name().expect("Invalid branch name");

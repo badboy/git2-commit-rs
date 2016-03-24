@@ -4,7 +4,7 @@ extern crate docopt;
 extern crate rustc_serialize;
 
 use docopt::Docopt;
-use git2::Error;
+use git2::{Error, BranchType};
 
 const USAGE: &'static str = "
 git2-commit
@@ -15,12 +15,13 @@ Usage:
   git2-commit [options] commit <message>
   git2-commit [options] tag <tag-name> <tag-message>
   git2-commit [options] push <push-url> <refs>...
-  git2-commit [options] branch
+  git2-commit [options] branch [--remotes]
 
 Options:
   -f, --force                     Allow adding otherwise ignored files.
   -r <path>, --repository=<path>  Path to the repository's working directory [default: .]
   -h, --help                      Show this screen.
+  --remotes                       List remote-tracking branches
 ";
 
 
@@ -38,6 +39,8 @@ struct Args {
 
     flag_force: bool,
     flag_repository: String,
+
+    flag_remotes: bool,
 
     cmd_add: bool,
     cmd_commit: bool,
@@ -81,7 +84,11 @@ fn git_push(args: &Args) -> Result<(), Error> {
 
 fn git_branch(args: &Args) -> Result<(), Error> {
     let repo = &args.flag_repository;
-    git2_commit::branch(repo)
+    let branch_type = match args.flag_remotes {
+        false => BranchType::Local,
+        true => BranchType::Remote,
+    };
+    git2_commit::branch(repo, branch_type)
 }
 
 fn run(args: &Args) -> Result<(), Error> {
