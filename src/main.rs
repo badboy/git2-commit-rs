@@ -18,10 +18,10 @@ Usage:
   git2-commit [options] branch [--remotes]
 
 Options:
-  -f, --force                     Allow adding otherwise ignored files.
-  -r <path>, --repository=<path>  Path to the repository's working directory [default: .]
-  -h, --help                      Show this screen.
-  --remotes                       List remote-tracking branches
+  -f, --force               Allow adding otherwise ignored files.
+  -p <path>, --path=<path>  Path to the repository's working directory [default: .]
+  -h, --help                Show this screen.
+  -r, --remotes             List remote-tracking branches
 ";
 
 
@@ -38,7 +38,7 @@ struct Args {
     arg_refs: Vec<String>,
 
     flag_force: bool,
-    flag_repository: String,
+    flag_path: String,
 
     flag_remotes: bool,
 
@@ -50,14 +50,14 @@ struct Args {
 }
 
 fn git_add(args: &Args) -> Result<(), Error> {
-    let repo = &args.flag_repository;
+    let repo = &args.flag_path;
     let files = &args.arg_file;
 
     git2_commit::add(repo, files, args.flag_force)
 }
 
 fn git_commit(args: &Args) -> Result<(), Error> {
-    let repo = &args.flag_repository;
+    let repo = &args.flag_path;
 
     let signature = try!(git2_commit::get_signature());
     let message = &args.arg_message;
@@ -66,7 +66,7 @@ fn git_commit(args: &Args) -> Result<(), Error> {
 }
 
 fn git_tag(args: &Args) -> Result<(), Error> {
-    let repo = &args.flag_repository;
+    let repo = &args.flag_path;
 
     let signature = try!(git2_commit::get_signature());
     let tag_name = &args.arg_tag_name;
@@ -75,7 +75,7 @@ fn git_tag(args: &Args) -> Result<(), Error> {
 }
 
 fn git_push(args: &Args) -> Result<(), Error> {
-    let repo = &args.flag_repository;
+    let repo = &args.flag_path;
 
     let url = &args.arg_push_url;
     let refs = args.arg_refs.iter().map(|r| &r[..]).collect::<Vec<_>>();
@@ -83,7 +83,7 @@ fn git_push(args: &Args) -> Result<(), Error> {
 }
 
 fn git_branch(args: &Args) -> Result<(), Error> {
-    let repo = &args.flag_repository;
+    let repo = &args.flag_path;
     let branch_type = match args.flag_remotes {
         false => BranchType::Local,
         true => BranchType::Remote,
