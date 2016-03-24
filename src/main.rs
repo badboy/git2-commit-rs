@@ -14,6 +14,7 @@ Usage:
   git2-commit [options] add [--force] <file>...
   git2-commit [options] commit <message>
   git2-commit [options] tag <tag-name> <tag-message>
+  git2-commit [options] push <push-url> <refs>...
 
 Options:
   -f, --force                     Allow adding otherwise ignored files.
@@ -31,11 +32,16 @@ struct Args {
     arg_tag_name: String,
     arg_tag_message: String,
 
+    arg_push_url: String,
+    arg_refs: Vec<String>,
+
     flag_force: bool,
     flag_repository: String,
+
     cmd_add: bool,
     cmd_commit: bool,
     cmd_tag: bool,
+    cmd_push: bool,
 }
 
 fn git_add(args: &Args) -> Result<(), Error> {
@@ -63,6 +69,14 @@ fn git_tag(args: &Args) -> Result<(), Error> {
     git2_commit::tag(repo, &signature.name, &signature.email, tag_name, tag_message)
 }
 
+fn git_push(args: &Args) -> Result<(), Error> {
+    let repo = &args.flag_repository;
+
+    let url = &args.arg_push_url;
+    let refs = args.arg_refs.iter().map(|r| &r[..]).collect::<Vec<_>>();
+    git2_commit::push(repo, url, &refs)
+}
+
 fn run(args: &Args) -> Result<(), Error> {
 
     if args.cmd_add {
@@ -77,6 +91,10 @@ fn run(args: &Args) -> Result<(), Error> {
         return git_tag(args);
     }
 
+    if args.cmd_push {
+        return git_push(args);
+    }
+
     Err(Error::from_str("Unknown command"))
 }
 
@@ -88,6 +106,5 @@ fn main() {
     match run(&args) {
         Ok(()) => {}
         Err(e) => println!("error: {}", e.message()),
-
     }
 }

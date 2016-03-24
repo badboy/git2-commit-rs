@@ -1,7 +1,7 @@
 extern crate git2;
 
 use std::path::Path;
-use git2::{Config, Repository, Signature, Error};
+use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, Cred};
 
 pub struct Author {
     pub name: String,
@@ -59,4 +59,18 @@ pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -
 
     repo.tag(tag_name, &obj, &signature, message, false)
         .map(|_| ())
+}
+
+pub fn push(repo: &str, url: &str, refs: &[&str]) -> Result<(), Error> {
+    let repo = try!(Repository::open(repo));
+    let mut remote = try!(repo.remote_anonymous(url));
+
+    let mut cbs = RemoteCallbacks::new();
+    cbs.credentials(|_url, _username, _allowed| {
+        Cred::userpass_plaintext("d5a2a11e82cc66b49e2e4023fdf58a41eb64be18", "")
+    });
+    let mut opts = PushOptions::new();
+    opts.remote_callbacks(cbs);
+
+    remote.push(refs, Some(&mut opts))
 }
