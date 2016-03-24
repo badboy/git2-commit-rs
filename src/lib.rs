@@ -1,6 +1,7 @@
 extern crate git2;
 
 use std::path::Path;
+use std::env;
 use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, Cred, BranchType};
 
 pub struct Author {
@@ -67,7 +68,8 @@ pub fn push(repo: &str, url: &str, refs: &[&str]) -> Result<(), Error> {
 
     let mut cbs = RemoteCallbacks::new();
     cbs.credentials(|_url, _username, _allowed| {
-        Cred::userpass_plaintext("d5a2a11e82cc66b49e2e4023fdf58a41eb64be18", "")
+        let token = env::var("GH_TOKEN").expect("GH_TOKEN should contain a valid OAuth token");
+        Cred::userpass_plaintext(&token, "")
     });
     let mut opts = PushOptions::new();
     opts.remote_callbacks(cbs);
