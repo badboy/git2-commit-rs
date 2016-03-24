@@ -1,7 +1,7 @@
 extern crate git2;
 
 use std::path::Path;
-use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, Cred};
+use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, Cred, BranchType};
 
 pub struct Author {
     pub name: String,
@@ -73,4 +73,31 @@ pub fn push(repo: &str, url: &str, refs: &[&str]) -> Result<(), Error> {
     opts.remote_callbacks(cbs);
 
     remote.push(refs, Some(&mut opts))
+}
+
+pub fn branch(repo: &str) -> Result<(), Error> {
+    let repo = try!(Repository::open(repo));
+
+    let head = try!(repo.head());
+
+    let short = head.shorthand().unwrap_or("empty");
+    if head.is_branch() {
+        println!("* {}", short);
+    } else {
+        let oid = head.target().expect("Invalid OID");
+        println!("* ({} detached at {})", short, oid);
+    }
+
+    let branches = repo.branches(Some(BranchType::Local)).expect("No branches found");
+
+    for (branch, _) in branches {
+        let name = branch.name().expect("Invalid branch name");
+        let name = name.expect("Branch name not UTF-8");
+
+        if name != short {
+            println!("  {}", name);
+        }
+    }
+
+    Ok(())
 }

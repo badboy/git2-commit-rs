@@ -15,6 +15,7 @@ Usage:
   git2-commit [options] commit <message>
   git2-commit [options] tag <tag-name> <tag-message>
   git2-commit [options] push <push-url> <refs>...
+  git2-commit [options] branch
 
 Options:
   -f, --force                     Allow adding otherwise ignored files.
@@ -42,6 +43,7 @@ struct Args {
     cmd_commit: bool,
     cmd_tag: bool,
     cmd_push: bool,
+    cmd_branch: bool,
 }
 
 fn git_add(args: &Args) -> Result<(), Error> {
@@ -77,6 +79,11 @@ fn git_push(args: &Args) -> Result<(), Error> {
     git2_commit::push(repo, url, &refs)
 }
 
+fn git_branch(args: &Args) -> Result<(), Error> {
+    let repo = &args.flag_repository;
+    git2_commit::branch(repo)
+}
+
 fn run(args: &Args) -> Result<(), Error> {
 
     if args.cmd_add {
@@ -93,6 +100,10 @@ fn run(args: &Args) -> Result<(), Error> {
 
     if args.cmd_push {
         return git_push(args);
+    }
+
+    if args.cmd_branch {
+        return git_branch(args);
     }
 
     Err(Error::from_str("Unknown command"))
