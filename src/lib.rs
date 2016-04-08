@@ -68,7 +68,7 @@ pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -
         .map(|_| ())
 }
 
-fn ref_tag_or_branch<'a>(repo: &Repository, names: &[String]) -> Vec<String> {
+fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Vec<String> {
     names.iter().map(|name| {
         let tagnames = repo.tag_names(Some(name)).expect("Finding tag names crashed");
 
