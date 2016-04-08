@@ -14,7 +14,7 @@ Usage:
   git2-commit [options] add [--force] <file>...
   git2-commit [options] commit <message>
   git2-commit [options] tag <tag-name> <tag-message>
-  git2-commit [options] push <push-url> <refs>...
+  git2-commit [options] push <remote> <branches>...
   git2-commit [options] branch [--remotes]
 
 Options:
@@ -34,8 +34,8 @@ struct Args {
     arg_tag_name: String,
     arg_tag_message: String,
 
-    arg_push_url: String,
-    arg_refs: Vec<String>,
+    arg_remote: String,
+    arg_branches: Vec<String>,
 
     flag_force: bool,
     flag_path: String,
@@ -77,9 +77,9 @@ fn git_tag(args: &Args) -> Result<(), Error> {
 fn git_push(args: &Args) -> Result<(), Error> {
     let repo = &args.flag_path;
 
-    let url = &args.arg_push_url;
-    let refs = args.arg_refs.iter().map(|r| &r[..]).collect::<Vec<_>>();
-    git2_commit::push(repo, url, &refs)
+    let remote = &args.arg_remote;
+    let branches = &args.arg_branches;
+    git2_commit::push(repo, remote, branches)
 }
 
 fn git_branch(args: &Args) -> Result<(), Error> {

@@ -1,8 +1,10 @@
 extern crate git2;
 
 use std::path::Path;
-use std::env;
-use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, Cred, BranchType};
+use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, BranchType};
+use utils::with_authentication;
+
+mod utils;
 
 pub struct Author {
     pub name: String,
@@ -62,19 +64,46 @@ pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -
         .map(|_| ())
 }
 
-pub fn push(repo: &str, url: &str, refs: &[&str]) -> Result<(), Error> {
+fn ref_tag_or_branch<'a>(repo: &Repository, names: &[String]) -> Vec<String> {
+    names.iter().map(|name| {
+        let tagnames = repo.tag_names(Some(name)).expect("Finding tag names crashed");
+
+        if tagnames.iter().any(|t| {
+            match t {
+                None => false,
+                Some(ref t) => t == name
+            }
+        }) {
+            format!("refs/tags/{}", name)
+        } else if repo.find_branch(name, BranchType::Local).is_ok() {
+            format!("refs/heads/{}", name)
+        } else {
+            panic!("Could not find matching tag or branch: '{}'", name);
+        }
+    }).collect()
+}
+
+pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Error> {
     let repo = try!(Repository::open(repo));
-    let mut remote = try!(repo.remote_anonymous(url));
+    let config = try!(repo.config());
 
-    let mut cbs = RemoteCallbacks::new();
-    cbs.credentials(|_url, _username, _allowed| {
-        let token = env::var("GH_TOKEN").expect("GH_TOKEN should contain a valid OAuth token");
-        Cred::userpass_plaintext(&token, "")
-    });
-    let mut opts = PushOptions::new();
-    opts.remote_callbacks(cbs);
+    let remote = try!(repo.find_remote(remote_name));
+    let remote_url = match remote.url() {
+        Some(url) => url,
+        None => return Err(Error::from_str(&format!("No remote URL found for '{}'", remote_name))),
+    };
 
-    remote.push(refs, Some(&mut opts))
+    with_authentication(remote_url, &config, |f| {
+        let mut cbs = RemoteCallbacks::new();
+        cbs.credentials(f);
+        let mut opts = PushOptions::new();
+        opts.remote_callbacks(cbs);
+
+        let refs = ref_tag_or_branch(&repo, branches);
+        let refs = refs.iter().map(|r| &r[..]).collect::<Vec<_>>();
+        let mut remote = try!(repo.remote_anonymous(remote_url));
+        remote.push(&refs[..], Some(&mut opts))
+    })
 }
 
 pub fn branch(repo: &str, branch_type: BranchType) -> Result<(), Error> {
