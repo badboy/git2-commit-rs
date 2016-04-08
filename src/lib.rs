@@ -1,8 +1,7 @@
 extern crate git2;
 
 use std::path::Path;
-use std::env;
-use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, Cred, BranchType};
+use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, BranchType};
 use utils::with_authentication;
 
 mod utils;
