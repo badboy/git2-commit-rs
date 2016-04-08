@@ -72,12 +72,14 @@ fn ref_tag_or_branch<'a>(repo: &Repository, names: &[String]) -> Vec<String> {
     names.iter().map(|name| {
         let tagnames = repo.tag_names(Some(name)).expect("Finding tag names crashed");
 
-        if tagnames.iter().any(|t| {
+        let is_tag = tagnames.iter().any(|t| {
             match t {
                 None => false,
                 Some(ref t) => t == name
             }
-        }) {
+        });
+
+        if is_tag {
             format!("refs/tags/{}", name)
         } else if repo.find_branch(name, BranchType::Local).is_ok() {
             format!("refs/heads/{}", name)
