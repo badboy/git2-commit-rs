@@ -80,9 +80,8 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
         // _and_ we have a token set, we assume we're pushing to GitHub using this token
         if allowed.contains(git2::USER_PASS_PLAINTEXT) {
             attempted = attempted | git2::USER_PASS_PLAINTEXT;
-            match env::var("GH_TOKEN") {
-                Ok(token) => return git2::Cred::userpass_plaintext(&token, ""),
-                _ => {}
+            if let Ok(token) = env::var("GH_TOKEN") {
+                return git2::Cred::userpass_plaintext(&token, "")
             }
         }
 
