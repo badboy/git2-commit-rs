@@ -37,12 +37,6 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
                              -> Result<(), git2::Error>
     where F: FnMut(&mut git2::Credentials) -> Result<(), git2::Error>
 {
-    let mut cred_helper = git2::CredentialHelper::new(url);
-    cred_helper.config(cfg);
-
-    let mut attempted = git2::CredentialType::empty();
-    let mut failed_cred_helper = false;
-
     // We try a couple of different user names when cloning via ssh as there's a
     // few possibilities if one isn't mentioned, and these are used to keep
     // track of that.
@@ -52,6 +46,12 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
         Local,
         Git,
     }
+
+    let mut cred_helper = git2::CredentialHelper::new(url);
+    cred_helper.config(cfg);
+
+    let mut attempted = git2::CredentialType::empty();
+    let mut failed_cred_helper = false;
     let mut username_attempt = UsernameAttempt::Arg;
     let mut username_attempts = Vec::new();
 
