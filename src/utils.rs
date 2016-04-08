@@ -1,6 +1,38 @@
 use git2;
 use std::env;
 
+/// Adopted from Cargo's `git/utils.rs`
+/// See
+/// <https://github.com/rust-lang/cargo/blob/31214eba27a935933f00702df189e764937d65af/src/cargo/sources/git/utils.rs#L389>
+/// for the original version
+///
+/// Prepare the authentication callbacks for cloning a git repository.
+///
+/// The main purpose of this function is to construct the "authentication
+/// callback" which is used to clone a repository. This callback will attempt to
+/// find the right authentication on the system (without user input) and will
+/// guide libgit2 in doing so.
+///
+/// The callback is provided `allowed` types of credentials, and we try to do as
+/// much as possible based on that:
+///
+/// * Prioritize SSH keys from the local ssh agent as they're likely the most
+///   reliable. The username here is prioritized from the credential
+///   callback, then from whatever is configured in git itself, and finally
+///   we fall back to the generic user of `git`.
+///
+/// * If a username/password is allowed, then we fallback to git2-rs's
+///   implementation of the credential helper. This is what is configured
+///   with `credential.helper` in git, and is the interface for the OSX
+///   keychain, for example.
+///
+/// * After the above two have failed, we just kinda grapple attempting to
+///   return *something*.
+///
+/// If any form of authentication fails, libgit2 will repeatedly ask us for
+/// credentials until we give it a reason to not do so. To ensure we don't
+/// just sit here looping forever we keep track of authentications we've
+/// attempted and we don't try the same ones again.
 pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
                              -> Result<(), git2::Error>
     where F: FnMut(&mut git2::Credentials) -> Result<(), git2::Error>
