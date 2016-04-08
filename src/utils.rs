@@ -55,7 +55,7 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
     let mut username_attempt = UsernameAttempt::Arg;
     let mut username_attempts = Vec::new();
 
-    let res = f(&mut |url, username, allowed| {
+    f(&mut |url, username, allowed| {
         let allowed = allowed & !attempted;
 
         // libgit2's "USERNAME" authentication actually means that it's just
@@ -147,7 +147,5 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
 
         // Whelp, we tried our best
         Err(git2::Error::from_str("no authentication available"))
-    });
-
-    return res
+    })
 }
