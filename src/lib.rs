@@ -33,7 +33,7 @@ pub fn add<P: AsRef<Path>>(repo: &str, files: &[P], force: bool) -> Result<(), E
     for path in files {
         let path = path.as_ref();
         if force || !repo.status_should_ignore(path).unwrap() {
-            let _ = try!(index.add_path(path.as_ref()));
+            try!(index.add_path(path.as_ref()));
         }
     }
 
