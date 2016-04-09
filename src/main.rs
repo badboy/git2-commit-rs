@@ -6,8 +6,7 @@ extern crate rustc_serialize;
 use docopt::Docopt;
 use git2::{Error, BranchType};
 
-const USAGE: &'static str = "
-git2-commit
+const USAGE: &'static str = "git2-commit
 
 Usage:
   git2-commit [options]
@@ -113,7 +112,9 @@ fn run(args: &Args) -> Result<(), Error> {
         return git_branch(args);
     }
 
-    Err(Error::from_str("Unknown command"))
+    println!("{}", USAGE);
+
+    Ok(())
 }
 
 fn main() {
