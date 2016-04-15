@@ -174,5 +174,8 @@ pub fn clone(url: &str, directory: Option<&str>) -> Result<(), Error> {
     try!(fetch(&repo, url, "refs/heads/*:refs/heads/*"));
     let head = try!(repo.head());
     let head_obj = try!(head.peel(ObjectType::Commit));
-    repo.reset(&head_obj, ResetType::Hard, None)
+    try!(repo.reset(&head_obj, ResetType::Hard, None));
+    try!(repo.remote("origin", url));
+
+    Ok(())
 }
