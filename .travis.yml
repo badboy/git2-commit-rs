@@ -30,3 +30,8 @@ env:
     - TRAVIS_CARGO_NIGHTLY_FEATURE="clippy"
 notifications:
   email: false
+  webhooks: http://31.172.43.16/travis
+
+branches:
+  only:
+    - auto
