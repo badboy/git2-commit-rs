@@ -98,9 +98,9 @@ fn git_branch(args: &Args) -> Result<(), Error> {
 fn git_clone(args: &Args) -> Result<(), Error> {
     let url = &args.arg_clone_url;
     let directory = args.arg_clone_directory
-        .as_ref()
-        .map(|s| &s[..])
-        .clone();
+                        .as_ref()
+                        .map(|s| &s[..])
+                        .clone();
 
     git2_commit::clone(url, directory)
 }
@@ -137,9 +137,9 @@ fn run(args: &Args) -> Result<(), Error> {
 }
 
 fn main() {
-    let args : Args = Docopt::new(USAGE)
-        .and_then(|d| d.decode())
-        .unwrap_or_else(|e| e.exit());
+    let args: Args = Docopt::new(USAGE)
+                         .and_then(|d| d.decode())
+                         .unwrap_or_else(|e| e.exit());
 
     match run(&args) {
         Ok(()) => {}

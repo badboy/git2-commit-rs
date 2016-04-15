@@ -8,7 +8,8 @@ extern crate url;
 use std::error::Error as StdError;
 use std::path::{Path, PathBuf};
 use std::fs;
-use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, BranchType, ResetType, ObjectType};
+use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, BranchType,
+           ResetType, ObjectType};
 use url::Url;
 use utils::{with_authentication, fetch};
 
@@ -16,7 +17,7 @@ mod utils;
 
 pub struct Author {
     pub name: String,
-    pub email: String
+    pub email: String,
 }
 
 pub fn get_signature() -> Result<Author, Error> {
@@ -25,7 +26,7 @@ pub fn get_signature() -> Result<Author, Error> {
     let email = try!(config.get_string("user.email"));
     Ok(Author {
         name: author.to_string(),
-        email: email.to_string()
+        email: email.to_string(),
     })
 }
 

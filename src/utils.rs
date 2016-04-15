@@ -33,8 +33,7 @@ use std::env;
 /// credentials until we give it a reason to not do so. To ensure we don't
 /// just sit here looping forever we keep track of authentications we've
 /// attempted and we don't try the same ones again.
-pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
-                             -> Result<(), git2::Error>
+pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F) -> Result<(), git2::Error>
     where F: FnMut(&mut git2::Credentials) -> Result<(), git2::Error>
 {
     // We try a couple of different user names when cloning via ssh as there's a
@@ -73,7 +72,7 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
         // a fallback of "git". We'll do some more principled attempts later on.
         if allowed.contains(git2::USERNAME) {
             attempted = attempted | git2::USERNAME;
-            return git2::Cred::username(username.unwrap_or("git"))
+            return git2::Cred::username(username.unwrap_or("git"));
         }
 
         // If User and password in plaintext is allowed
@@ -81,7 +80,7 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
         if allowed.contains(git2::USER_PASS_PLAINTEXT) {
             attempted = attempted | git2::USER_PASS_PLAINTEXT;
             if let Ok(token) = env::var("GH_TOKEN") {
-                return git2::Cred::userpass_plaintext(&token, "")
+                return git2::Cred::userpass_plaintext(&token, "");
             }
         }
 
@@ -120,7 +119,7 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
                 if let Some(name) = name {
                     let ret = git2::Cred::ssh_key_from_agent(&name);
                     username_attempts.push(name);
-                    return ret
+                    return ret;
                 }
             }
         }
@@ -134,14 +133,14 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
             attempted = attempted | git2::USER_PASS_PLAINTEXT;
             let r = git2::Cred::credential_helper(cfg, url, username);
             failed_cred_helper = r.is_err();
-            return r
+            return r;
         }
 
         // I'm... not sure what the DEFAULT kind of authentication is, but seems
         // easy to support?
         if allowed.contains(git2::DEFAULT) {
             attempted = attempted | git2::DEFAULT;
-            return git2::Cred::default()
+            return git2::Cred::default();
         }
 
         // Whelp, we tried our best
