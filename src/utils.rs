@@ -148,3 +148,16 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F)
         Err(git2::Error::from_str("no authentication available"))
     })
 }
+
+pub fn fetch(repo: &git2::Repository, url: &str, refspec: &str) -> Result<(), git2::Error> {
+    with_authentication(url, &try!(repo.config()), |f| {
+        let mut cb = git2::RemoteCallbacks::new();
+        cb.credentials(f);
+        let mut remote = try!(repo.remote_anonymous(&url));
+        let mut opts = git2::FetchOptions::new();
+        opts.remote_callbacks(cb)
+            .download_tags(git2::AutotagOption::All);
+        try!(remote.fetch(&[refspec], Some(&mut opts), None));
+        Ok(())
+    })
+}

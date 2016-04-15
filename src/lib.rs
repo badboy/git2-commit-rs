@@ -3,10 +3,14 @@
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
 extern crate git2;
+extern crate url;
 
-use std::path::Path;
-use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, BranchType};
-use utils::with_authentication;
+use std::error::Error as StdError;
+use std::path::{Path, PathBuf};
+use std::fs;
+use git2::{Config, Repository, Signature, Error, PushOptions, RemoteCallbacks, BranchType, ResetType, ObjectType};
+use url::Url;
+use utils::{with_authentication, fetch};
 
 mod utils;
 
@@ -137,6 +141,41 @@ pub fn branch(repo: &str, branch_type: BranchType) -> Result<(), Error> {
             println!("  {}", name);
         }
     }
+
+    Ok(())
+}
+
+pub fn clone(url: &str, directory: Option<&str>) -> Result<(), Error> {
+    let parsed_url = try!(Url::parse(url).map_err(|e| Error::from_str(e.description())));
+
+    let dst = match directory {
+        Some(dir) => PathBuf::from(dir),
+        None => {
+            let url_paths = match parsed_url.path() {
+                None => return Err(Error::from_str("URL has no path. Can't extract target directory")),
+                Some(p) => p
+            };
+
+            let len = url_paths.len();
+            let last_path = &url_paths[len-1];
+            let mut path = PathBuf::from(last_path);
+            path.set_extension("");
+            path
+        }
+    };
+
+    if fs::metadata(&dst).is_ok() {
+        return Err(Error::from_str("Target path exists."));
+    }
+
+    try!(fs::create_dir_all(&dst).map_err(|e| Error::from_str(e.description())));
+    let repo = try!(git2::Repository::init(&dst));
+
+    try!(fetch(&repo, url, "refs/heads/*:refs/heads/*"));
+    let head = try!(repo.head());
+    let head_obj = try!(head.peel(ObjectType::Commit));
+    try!(repo.reset(&head_obj, ResetType::Hard, None));
+    try!(repo.remote("origin", url));
 
     Ok(())
 }

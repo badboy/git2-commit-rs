@@ -15,6 +15,7 @@ Usage:
   git2-commit [options] tag <tag-name> <tag-message>
   git2-commit [options] push <remote> <branches>...
   git2-commit [options] branch [--remotes]
+  git2-commit [options] clone <clone-url> [<clone-directory>]
 
 Options:
   -f, --force               Allow adding otherwise ignored files.
@@ -36,6 +37,9 @@ struct Args {
     arg_remote: String,
     arg_branches: Vec<String>,
 
+    arg_clone_url: String,
+    arg_clone_directory: Option<String>,
+
     flag_force: bool,
     flag_path: String,
 
@@ -46,6 +50,7 @@ struct Args {
     cmd_tag: bool,
     cmd_push: bool,
     cmd_branch: bool,
+    cmd_clone: bool,
 }
 
 fn git_add(args: &Args) -> Result<(), Error> {
@@ -90,6 +95,16 @@ fn git_branch(args: &Args) -> Result<(), Error> {
     git2_commit::branch(repo, branch_type)
 }
 
+fn git_clone(args: &Args) -> Result<(), Error> {
+    let url = &args.arg_clone_url;
+    let directory = args.arg_clone_directory
+        .as_ref()
+        .map(|s| &s[..])
+        .clone();
+
+    git2_commit::clone(url, directory)
+}
+
 fn run(args: &Args) -> Result<(), Error> {
 
     if args.cmd_add {
@@ -110,6 +125,10 @@ fn run(args: &Args) -> Result<(), Error> {
 
     if args.cmd_branch {
         return git_branch(args);
+    }
+
+    if args.cmd_clone {
+        return git_clone(args);
     }
 
     println!("{}", USAGE);
