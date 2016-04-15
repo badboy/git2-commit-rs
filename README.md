@@ -13,3 +13,4 @@ Based on [`git2-rs`](https://github.com/alexcrichton/git2-rs).
 * `tag`: Always annotated
 * `push`: Only existing remotes and branches or tags. Branches or tags are detected.
 * `branch`: Only listing branches (listing remote branches possible)
+* `clone`: A simple clone is possible. No fancy options though. Target directory can be specified.
