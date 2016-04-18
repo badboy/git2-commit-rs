@@ -18,9 +18,9 @@ Usage:
   git2-commit [options] clone <clone-url> [<clone-directory>]
 
 Options:
-  -f, --force               Allow adding otherwise ignored files.
-  -p <path>, --path=<path>  Path to the repository's working directory [default: .]
   -h, --help                Show this screen.
+  -p <path>, --path=<path>  Path to the repository's working directory [default: .]
+  -f, --force               Allow adding otherwise ignored files.
   -r, --remotes             List remote-tracking branches
 ";
 
