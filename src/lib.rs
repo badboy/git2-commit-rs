@@ -117,18 +117,19 @@ pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Er
     })
 }
 
-pub fn branch(repo: &str, branch_type: BranchType) -> Result<(), Error> {
+pub fn branch(repo: &str, branch_type: BranchType) -> Result<Vec<String>, Error> {
     let repo = try!(Repository::open(repo));
 
     let head = try!(repo.head());
     let short = head.shorthand().unwrap_or("empty");
 
+    let mut v = vec![];
     if branch_type == BranchType::Local {
         if head.is_branch() {
-            println!("* {}", short);
+            v.push(format!("* {}", short));
         } else {
-            let oid = try!(head.target());
-            println!("* ({} detached at {})", short, oid);
+            let oid = try!(head.target().ok_or(Error::from_str("Could not find head-target")));
+            v.push(format!("* ({} detached at {})", short, oid));
         }
     }
 
@@ -136,14 +137,14 @@ pub fn branch(repo: &str, branch_type: BranchType) -> Result<(), Error> {
 
     for (branch, _) in branches {
         let name = try!(branch.name());
-        let name = try!(name);
+        let name = try!(name.ok_or(Error::from_str("Could not find branch name")));
 
         if name != short {
-            println!("  {}", name);
+            v.push(String::from(name));
         }
     }
 
-    Ok(())
+    Ok(v)
 }
 
 pub fn clone(url: &str, directory: Option<&str>) -> Result<(), Error> {

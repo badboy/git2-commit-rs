@@ -93,6 +93,9 @@ fn git_branch(args: &Args) -> Result<(), Error> {
         true => BranchType::Remote,
     };
     git2_commit::branch(repo, branch_type)
+        .map(|v| for i in v {
+            println!("  {}", i);
+        })
 }
 
 fn git_clone(args: &Args) -> Result<(), Error> {
