@@ -37,7 +37,7 @@ pub fn add<P: AsRef<Path>>(repo: &str, files: &[P], force: bool) -> Result<(), E
 
     for path in files {
         let path = path.as_ref();
-        if force || !repo.status_should_ignore(path).unwrap() {
+        if force || !try!(repo.status_should_ignore(path)) {
             try!(index.add_path(path.as_ref()));
         }
     }
@@ -75,7 +75,7 @@ pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -
 
 fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Vec<String> {
     names.iter().map(|name| {
-        let tagnames = repo.tag_names(Some(name)).expect("Finding tag names crashed");
+        let tagnames = try!(repo.tag_names(Some(name)));
 
         let is_tag = tagnames.iter().any(|t| {
             match t {
@@ -127,16 +127,16 @@ pub fn branch(repo: &str, branch_type: BranchType) -> Result<(), Error> {
         if head.is_branch() {
             println!("* {}", short);
         } else {
-            let oid = head.target().expect("Invalid OID");
+            let oid = try!(head.target());
             println!("* ({} detached at {})", short, oid);
         }
     }
 
-    let branches = repo.branches(Some(branch_type)).expect("No branches found");
+    let branches = try!(repo.branches(Some(branch_type)));
 
     for (branch, _) in branches {
-        let name = branch.name().expect("Invalid branch name");
-        let name = name.expect("Branch name not UTF-8");
+        let name = try!(branch.name());
+        let name = try!(name);
 
         if name != short {
             println!("  {}", name);
