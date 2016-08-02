@@ -37,7 +37,7 @@ pub fn add<P: AsRef<Path>>(repo: &str, files: &[P], force: bool) -> Result<(), E
 
     for path in files {
         let path = path.as_ref();
-        if force || !repo.status_should_ignore(path).unwrap() {
+        if force || !try!(repo.status_should_ignore(path)) {
             try!(index.add_path(path.as_ref()));
         }
     }
@@ -73,25 +73,31 @@ pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -
         .map(|_| ())
 }
 
-fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Vec<String> {
-    names.iter().map(|name| {
-        let tagnames = repo.tag_names(Some(name)).expect("Finding tag names crashed");
+fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Result<Vec<String>, Error> {
+    names.iter().fold(Ok(vec![]), |acc, name| {
+        acc.and_then(|mut v| {
+            let tagnames = try!(repo.tag_names(Some(name)));
 
-        let is_tag = tagnames.iter().any(|t| {
-            match t {
-                None => false,
-                Some(ref t) => t == name
-            }
-        });
+            let is_tag = tagnames.iter().any(|t| {
+                match t {
+                    None => false,
+                    Some(ref t) => t == name
+                }
+            });
 
-        if is_tag {
-            format!("refs/tags/{}", name)
-        } else if repo.find_branch(name, BranchType::Local).is_ok() {
-            format!("refs/heads/{}", name)
-        } else {
-            panic!("Could not find matching tag or branch: '{}'", name);
-        }
-    }).collect()
+            let item = if is_tag {
+                format!("refs/tags/{}", name)
+            } else if repo.find_branch(name, BranchType::Local).is_ok() {
+                format!("refs/heads/{}", name)
+            } else {
+                let s = format!("Could not find matching tag or branch: '{}'", name);
+                return Err(Error::from_str(&s[..]));
+            };
+
+            v.push(item);
+            Ok(v)
+        })
+    })
 }
 
 pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Error> {
@@ -110,40 +116,41 @@ pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Er
         let mut opts = PushOptions::new();
         opts.remote_callbacks(cbs);
 
-        let refs = ref_tag_or_branch(&repo, branches);
+        let refs = try!(ref_tag_or_branch(&repo, branches));
         let refs = refs.iter().map(|r| &r[..]).collect::<Vec<_>>();
         let mut remote = try!(repo.remote_anonymous(remote_url));
         remote.push(&refs[..], Some(&mut opts))
     })
 }
 
-pub fn branch(repo: &str, branch_type: BranchType) -> Result<(), Error> {
+pub fn branch(repo: &str, branch_type: BranchType) -> Result<Vec<String>, Error> {
     let repo = try!(Repository::open(repo));
 
     let head = try!(repo.head());
     let short = head.shorthand().unwrap_or("empty");
 
+    let mut v = vec![];
     if branch_type == BranchType::Local {
         if head.is_branch() {
-            println!("* {}", short);
+            v.push(format!("* {}", short));
         } else {
-            let oid = head.target().expect("Invalid OID");
-            println!("* ({} detached at {})", short, oid);
+            let oid = try!(head.target().ok_or(Error::from_str("Could not find head-target")));
+            v.push(format!("* ({} detached at {})", short, oid));
         }
     }
 
-    let branches = repo.branches(Some(branch_type)).expect("No branches found");
+    let branches = try!(repo.branches(Some(branch_type)));
 
     for (branch, _) in branches {
-        let name = branch.name().expect("Invalid branch name");
-        let name = name.expect("Branch name not UTF-8");
+        let name = try!(branch.name());
+        let name = try!(name.ok_or(Error::from_str("Could not find branch name")));
 
         if name != short {
-            println!("  {}", name);
+            v.push(String::from(name));
         }
     }
 
-    Ok(())
+    Ok(v)
 }
 
 pub fn clone(url: &str, directory: Option<&str>) -> Result<(), Error> {
