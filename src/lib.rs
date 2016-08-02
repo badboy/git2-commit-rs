@@ -73,25 +73,31 @@ pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -
         .map(|_| ())
 }
 
-fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Vec<String> {
-    names.iter().map(|name| {
-        let tagnames = try!(repo.tag_names(Some(name)));
+fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Result<Vec<String>, Error> {
+    names.iter().fold(Ok(vec![]), |acc, name| {
+        acc.and_then(|mut v| {
+            let tagnames = try!(repo.tag_names(Some(name)));
 
-        let is_tag = tagnames.iter().any(|t| {
-            match t {
-                None => false,
-                Some(ref t) => t == name
-            }
-        });
+            let is_tag = tagnames.iter().any(|t| {
+                match t {
+                    None => false,
+                    Some(ref t) => t == name
+                }
+            });
 
-        if is_tag {
-            format!("refs/tags/{}", name)
-        } else if repo.find_branch(name, BranchType::Local).is_ok() {
-            format!("refs/heads/{}", name)
-        } else {
-            panic!("Could not find matching tag or branch: '{}'", name);
-        }
-    }).collect()
+            let item = if is_tag {
+                format!("refs/tags/{}", name)
+            } else if repo.find_branch(name, BranchType::Local).is_ok() {
+                format!("refs/heads/{}", name)
+            } else {
+                let s = format!("Could not find matching tag or branch: '{}'", name);
+                return Err(Error::from_str(&s[..]));
+            };
+
+            v.push(item);
+            Ok(v)
+        })
+    })
 }
 
 pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Error> {
@@ -110,7 +116,7 @@ pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Er
         let mut opts = PushOptions::new();
         opts.remote_callbacks(cbs);
 
-        let refs = ref_tag_or_branch(&repo, branches);
+        let refs = try!(ref_tag_or_branch(&repo, branches));
         let refs = refs.iter().map(|r| &r[..]).collect::<Vec<_>>();
         let mut remote = try!(repo.remote_anonymous(remote_url));
         remote.push(&refs[..], Some(&mut opts))
