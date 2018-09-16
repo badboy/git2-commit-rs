@@ -17,18 +17,26 @@ Based on [`git2-rs`](https://github.com/alexcrichton/git2-rs).
 ## Usage
 
 ```
-Usage:
-  git2-commit [options]
-  git2-commit [options] add [--force] <file>...
-  git2-commit [options] commit <message>
-  git2-commit [options] tag <tag-name> <tag-message>
-  git2-commit [options] push <remote> <branches>...
-  git2-commit [options] branch [--remotes]
-  git2-commit [options] clone <clone-url> [<clone-directory>]
+git2-commit 0.1.0
+Jan-Erik Rediger <janerik@fnordig.de>
+git2-commit - Simple git commands, reimplemented.
 
-Options:
-  -h, --help                Show this screen.
-  -p <path>, --path=<path>  Path to the repository's working directory [default: .]
-  -f, --force               Allow adding otherwise ignored files.
-  -r, --remotes             List remote-tracking branches
+USAGE:
+    git2-commit [OPTIONS] <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -p, --path <path>    Path to the repository's working directory [default: .]
+
+SUBCOMMANDS:
+    add       Add file contents to the index
+    branch    List branches
+    clone     Clone a repository
+    commit    Record changes to a repository
+    help      Prints this message or the help of the given subcommand(s)
+    push      Push local commits to a remote
+    tag       Create a tag
 ```
