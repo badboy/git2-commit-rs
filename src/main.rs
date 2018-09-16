@@ -2,6 +2,7 @@ extern crate git2;
 extern crate git2_commit;
 #[macro_use]
 extern crate structopt;
+#[macro_use]
 extern crate log;
 extern crate env_logger;
 
@@ -76,6 +77,8 @@ enum Command {
 }
 
 fn run(git: Git) -> Result<(), Error> {
+    debug!("{:?}", git);
+
     let repo = git.path.unwrap_or_else(|| ".".to_string());
 
     use Command::*;
@@ -85,13 +88,15 @@ fn run(git: Git) -> Result<(), Error> {
         },
 
         Commit { message } => {
-            let signature = git2_commit::get_signature()?;
-            git2_commit::commit(&repo, &signature.name, &signature.email, &message)
+            let author = git2_commit::get_author()?;
+            debug!("{:?}", author);
+            git2_commit::commit(&repo, &author.name, &author.email, &message)
         },
 
         Tag { tag, message } => {
-            let signature = git2_commit::get_signature()?;
-            git2_commit::tag(&repo, &signature.name, &signature.email, &tag, &message)
+            let author = git2_commit::get_author()?;
+            debug!("{:?}", author);
+            git2_commit::tag(&repo, &author.name, &author.email, &tag, &message)
         },
 
         Push { remote, branches } => {
@@ -104,6 +109,7 @@ fn run(git: Git) -> Result<(), Error> {
             } else {
                 BranchType::Local
             };
+            debug!("Branch type: {:?}", branch_type);
             let branches = git2_commit::branch(&repo, branch_type)?;
             for branch in branches {
                 if branch.starts_with("* ") {

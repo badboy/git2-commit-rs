@@ -1,5 +1,6 @@
 extern crate url;
 extern crate git2;
+#[macro_use]
 extern crate log;
 
 use std::error::Error as StdError;
@@ -12,12 +13,13 @@ use utils::{with_authentication, fetch};
 
 mod utils;
 
+#[derive(Debug)]
 pub struct Author {
     pub name: String,
     pub email: String,
 }
 
-pub fn get_signature() -> Result<Author, Error> {
+pub fn get_author() -> Result<Author, Error> {
     let config = Config::open_default()?;
     let author = config.get_string("user.name")?;
     let email = config.get_string("user.email")?;
@@ -64,6 +66,7 @@ pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<(), 
 pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -> Result<(), Error> {
     let repo = Repository::open(repo)?;
     let obj = repo.revparse_single("HEAD")?;
+    debug!("rev-parse(HEAD): {:?}", obj);
     let signature = Signature::now(name, email)?;
 
     repo.tag(tag_name, &obj, &signature, message, false)
@@ -106,6 +109,7 @@ pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Er
         Some(url) => url,
         None => return Err(Error::from_str(&format!("No remote URL found for '{}'", remote_name))),
     };
+    debug!("Pushing to {:?}", remote_url);
 
     with_authentication(remote_url, &config, |f| {
         let mut cbs = RemoteCallbacks::new();
@@ -125,6 +129,7 @@ pub fn branch(repo: &str, branch_type: BranchType) -> Result<Vec<String>, Error>
 
     let head = repo.head()?;
     let short = head.shorthand().unwrap_or("empty");
+    debug!("Short: {:?}", short);
 
     let mut v = vec![];
     if branch_type == BranchType::Local {
@@ -170,6 +175,7 @@ pub fn clone<S: AsRef<str>>(url: &str, directory: Option<S>) -> Result<(), Error
             path
         }
     };
+    debug!("Cloning into: {:?}", dst);
 
     if fs::metadata(&dst).is_ok() {
         return Err(Error::from_str("Target path exists."));
