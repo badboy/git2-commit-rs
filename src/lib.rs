@@ -18,9 +18,9 @@ pub struct Author {
 }
 
 pub fn get_signature() -> Result<Author, Error> {
-    let config = try!(Config::open_default());
-    let author = try!(config.get_string("user.name"));
-    let email = try!(config.get_string("user.email"));
+    let config = Config::open_default()?;
+    let author = config.get_string("user.name")?;
+    let email = config.get_string("user.email")?;
     Ok(Author {
         name: author.to_string(),
         email: email.to_string(),
@@ -29,13 +29,13 @@ pub fn get_signature() -> Result<Author, Error> {
 
 
 pub fn add<P: AsRef<Path>>(repo: &str, files: &[P], force: bool) -> Result<(), Error> {
-    let repo = try!(Repository::open(repo));
-    let mut index = try!(repo.index());
+    let repo = Repository::open(repo)?;
+    let mut index = repo.index()?;
 
     for path in files {
         let path = path.as_ref();
-        if force || !try!(repo.status_should_ignore(path)) {
-            try!(index.add_path(path.as_ref()));
+        if force || !repo.status_should_ignore(path)? {
+            index.add_path(path.as_ref())?;
         }
     }
 
@@ -43,18 +43,18 @@ pub fn add<P: AsRef<Path>>(repo: &str, files: &[P], force: bool) -> Result<(), E
 }
 
 pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<(), Error> {
-    let signature = try!(Signature::now(name, email));
+    let signature = Signature::now(name, email)?;
     let update_ref = Some("HEAD");
 
-    let repo = try!(Repository::open(repo));
+    let repo = Repository::open(repo)?;
 
-    let oid = try!(repo.refname_to_id("HEAD"));
-    let parent_commit = try!(repo.find_commit(oid));
+    let oid = repo.refname_to_id("HEAD")?;
+    let parent_commit = repo.find_commit(oid)?;
     let parents = vec![&parent_commit];
 
-    let mut index = try!(repo.index());
-    let tree_oid = try!(index.write_tree());
-    let tree = try!(repo.find_tree(tree_oid));
+    let mut index = repo.index()?;
+    let tree_oid = index.write_tree()?;
+    let tree = repo.find_tree(tree_oid)?;
 
     repo
         .commit(update_ref, &signature, &signature, message, &tree, &parents)
@@ -62,9 +62,9 @@ pub fn commit(repo: &str, name: &str, email: &str, message: &str) -> Result<(), 
 }
 
 pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -> Result<(), Error> {
-    let repo = try!(Repository::open(repo));
-    let obj = try!(repo.revparse_single("HEAD"));
-    let signature = try!(Signature::now(name, email));
+    let repo = Repository::open(repo)?;
+    let obj = repo.revparse_single("HEAD")?;
+    let signature = Signature::now(name, email)?;
 
     repo.tag(tag_name, &obj, &signature, message, false)
         .map(|_| ())
@@ -73,7 +73,7 @@ pub fn tag(repo: &str, name: &str, email: &str, tag_name: &str, message: &str) -
 fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Result<Vec<String>, Error> {
     names.iter().fold(Ok(vec![]), |acc, name| {
         acc.and_then(|mut v| {
-            let tagnames = try!(repo.tag_names(Some(name)));
+            let tagnames = repo.tag_names(Some(name))?;
 
             let is_tag = tagnames.iter().any(|t| {
                 match t {
@@ -98,10 +98,10 @@ fn ref_tag_or_branch(repo: &Repository, names: &[String]) -> Result<Vec<String>,
 }
 
 pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Error> {
-    let repo = try!(Repository::open(repo));
-    let config = try!(repo.config());
+    let repo = Repository::open(repo)?;
+    let config = repo.config()?;
 
-    let remote = try!(repo.find_remote(remote_name));
+    let remote = repo.find_remote(remote_name)?;
     let remote_url = match remote.url() {
         Some(url) => url,
         None => return Err(Error::from_str(&format!("No remote URL found for '{}'", remote_name))),
@@ -113,17 +113,17 @@ pub fn push(repo: &str, remote_name: &str, branches: &[String]) -> Result<(), Er
         let mut opts = PushOptions::new();
         opts.remote_callbacks(cbs);
 
-        let refs = try!(ref_tag_or_branch(&repo, branches));
+        let refs = ref_tag_or_branch(&repo, branches)?;
         let refs = refs.iter().map(|r| &r[..]).collect::<Vec<_>>();
-        let mut remote = try!(repo.remote_anonymous(remote_url));
+        let mut remote = repo.remote_anonymous(remote_url)?;
         remote.push(&refs[..], Some(&mut opts))
     })
 }
 
 pub fn branch(repo: &str, branch_type: BranchType) -> Result<Vec<String>, Error> {
-    let repo = try!(Repository::open(repo));
+    let repo = Repository::open(repo)?;
 
-    let head = try!(repo.head());
+    let head = repo.head()?;
     let short = head.shorthand().unwrap_or("empty");
 
     let mut v = vec![];
@@ -131,17 +131,17 @@ pub fn branch(repo: &str, branch_type: BranchType) -> Result<Vec<String>, Error>
         if head.is_branch() {
             v.push(format!("* {}", short));
         } else {
-            let oid = try!(head.target().ok_or(Error::from_str("Could not find head-target")));
+            let oid = head.target().ok_or(Error::from_str("Could not find head-target"))?;
             v.push(format!("* ({} detached at {})", short, oid));
         }
     }
 
-    let branches = try!(repo.branches(Some(branch_type)));
+    let branches = repo.branches(Some(branch_type))?;
 
     for branch in branches {
         if let Ok((branch, _)) = branch {
-            let name = try!(branch.name());
-            let name = try!(name.ok_or(Error::from_str("Could not find branch name")));
+            let name = branch.name()?;
+            let name = name.ok_or(Error::from_str("Could not find branch name"))?;
 
             if name != short {
                 v.push(String::from(name));
@@ -153,7 +153,7 @@ pub fn branch(repo: &str, branch_type: BranchType) -> Result<Vec<String>, Error>
 }
 
 pub fn clone<S: AsRef<str>>(url: &str, directory: Option<S>) -> Result<(), Error> {
-    let parsed_url = try!(Url::parse(url).map_err(|e| Error::from_str(e.description())));
+    let parsed_url = Url::parse(url).map_err(|e| Error::from_str(e.description()))?;
 
     let dst = match directory {
         Some(dir) => PathBuf::from(dir.as_ref()),
@@ -175,14 +175,14 @@ pub fn clone<S: AsRef<str>>(url: &str, directory: Option<S>) -> Result<(), Error
         return Err(Error::from_str("Target path exists."));
     }
 
-    try!(fs::create_dir_all(&dst).map_err(|e| Error::from_str(e.description())));
-    let repo = try!(git2::Repository::init(&dst));
+    fs::create_dir_all(&dst).map_err(|e| Error::from_str(e.description()))?;
+    let repo = git2::Repository::init(&dst)?;
 
-    try!(fetch(&repo, url, "refs/heads/*:refs/heads/*"));
-    let head = try!(repo.head());
-    let head_obj = try!(head.peel(ObjectType::Commit));
-    try!(repo.reset(&head_obj, ResetType::Hard, None));
-    try!(repo.remote("origin", url));
+    fetch(&repo, url, "refs/heads/*:refs/heads/*")?;
+    let head = repo.head()?;
+    let head_obj = head.peel(ObjectType::Commit)?;
+    repo.reset(&head_obj, ResetType::Hard, None)?;
+    repo.remote("origin", url)?;
 
     Ok(())
 }

@@ -85,12 +85,12 @@ fn run(git: Git) -> Result<(), Error> {
         },
 
         Commit { message } => {
-            let signature = try!(git2_commit::get_signature());
+            let signature = git2_commit::get_signature()?;
             git2_commit::commit(&repo, &signature.name, &signature.email, &message)
         },
 
         Tag { tag, message } => {
-            let signature = try!(git2_commit::get_signature());
+            let signature = git2_commit::get_signature()?;
             git2_commit::tag(&repo, &signature.name, &signature.email, &tag, &message)
         },
 

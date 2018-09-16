@@ -177,7 +177,8 @@ pub fn with_authentication<F>(url: &str, cfg: &git2::Config, mut f: F) -> Result
 }
 
 pub fn fetch(repo: &git2::Repository, url: &str, refspec: &str) -> Result<(), git2::Error> {
-    with_authentication(url, &try!(repo.config()), |f| {
+    let config = repo.config()?;
+    with_authentication(url, &config, |f| {
         let mut cb = git2::RemoteCallbacks::new();
         cb.credentials(f);
         let mut remote = try!(repo.remote_anonymous(&url));
