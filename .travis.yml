@@ -1,11 +1,5 @@
 language: rust
 sudo: false
-addons:
-  apt:
-    sources:
-      - kalakris-cmake
-    packages:
-      - cmake
 
 # run builds for both all the trains
 rust:
