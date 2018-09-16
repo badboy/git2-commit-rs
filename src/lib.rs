@@ -1,9 +1,6 @@
-#![cfg_attr(feature = "clippy", allow(unstable_features))]
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-
-extern crate git2;
 extern crate url;
+extern crate git2;
+extern crate log;
 
 use std::error::Error as StdError;
 use std::path::{Path, PathBuf};
@@ -141,27 +138,29 @@ pub fn branch(repo: &str, branch_type: BranchType) -> Result<Vec<String>, Error>
 
     let branches = try!(repo.branches(Some(branch_type)));
 
-    for (branch, _) in branches {
-        let name = try!(branch.name());
-        let name = try!(name.ok_or(Error::from_str("Could not find branch name")));
+    for branch in branches {
+        if let Ok((branch, _)) = branch {
+            let name = try!(branch.name());
+            let name = try!(name.ok_or(Error::from_str("Could not find branch name")));
 
-        if name != short {
-            v.push(String::from(name));
+            if name != short {
+                v.push(String::from(name));
+            }
         }
     }
 
     Ok(v)
 }
 
-pub fn clone(url: &str, directory: Option<&str>) -> Result<(), Error> {
+pub fn clone<S: AsRef<str>>(url: &str, directory: Option<S>) -> Result<(), Error> {
     let parsed_url = try!(Url::parse(url).map_err(|e| Error::from_str(e.description())));
 
     let dst = match directory {
-        Some(dir) => PathBuf::from(dir),
+        Some(dir) => PathBuf::from(dir.as_ref()),
         None => {
-            let url_paths = match parsed_url.path() {
+            let url_paths = match parsed_url.path_segments() {
                 None => return Err(Error::from_str("URL has no path. Can't extract target directory")),
-                Some(p) => p
+                Some(p) => p.collect::<Vec<_>>()
             };
 
             let len = url_paths.len();

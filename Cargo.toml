@@ -4,11 +4,11 @@ name = "git2-commit"
 version = "0.1.0"
 
 [dependencies]
-docopt = "0.6.78"
-git2 = "0.3.4"
-rustc-serialize = "0.3.16"
-url = "0.5.9"
-clippy = {version = "~0.0.63", optional = true}
+git2 = "0.7.5"
+url = "1.7.0"
+structopt = "0.2.10"
+log = "0.4.5"
+env_logger = "0.5.13"
 
 [[bin]]
 name = "git2-commit"
