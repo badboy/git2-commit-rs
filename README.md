@@ -1,7 +1,6 @@
 # git2-commit
 
 [![Build Status](https://travis-ci.org/badboy/git2-commit-rs.svg?branch=master)](https://travis-ci.org/badboy/git2-commit-rs)
-[![Clippy Linting Result](https://clippy.bashy.io/github/badboy/git2-commit-rs/master/badge.svg)](https://clippy.bashy.io/github/badboy/git2-commit-rs/master/log)
 
 A reimplementation of a few git commands.  
 Based on [`git2-rs`](https://github.com/alexcrichton/git2-rs).
